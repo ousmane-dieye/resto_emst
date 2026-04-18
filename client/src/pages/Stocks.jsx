@@ -11,6 +11,7 @@ const Stocks = () => {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [selected, setSelected] = useState(null);
+  const [editForm, setEditForm] = useState({ qte: 0, seuil: 0 });
 
   const fetchStocks = useCallback(async () => {
     try {
@@ -27,15 +28,26 @@ const Stocks = () => {
     fetchStocks();
   }, [fetchStocks]);
 
+  const handleEdit = (stock) => {
+    setSelected(stock);
+    setEditForm({ qte: stock.quantite, seuil: stock.seuilAlerte });
+    setModal('edit');
+  };
+
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
       await stocksApi.update(selected.id, {
-        quantite: parseInt(document.getElementById('qte').value),
-        seuilAlerte: parseInt(document.getElementById('seuil').value),
+        quantite: parseInt(editForm.qte),
+        seuilAlerte: parseInt(editForm.seuil),
       });
-      setStocks(prev => prev.map(s => s.id === selected.id ? { ...s, quantite: parseInt(document.getElementById('qte').value), seuilAlerte: parseInt(document.getElementById('seuil').value) } : s));
+      setStocks(prev => prev.map(s => s.id === selected.id ? { 
+        ...s, 
+        quantite: parseInt(editForm.qte), 
+        seuilAlerte: parseInt(editForm.seuil) 
+      } : s));
       setModal(null);
+      setSelected(null);
     } catch (err) {
       showError(err.message);
     }
@@ -87,7 +99,7 @@ const Stocks = () => {
                     }
                   </td>
                   <td className="p-3">
-                    <button onClick={() => { setSelected(s); setModal('edit'); }} className="px-3 py-1.5 bg-bg3 border border-border rounded-sm text-xs hover:border-green">
+                    <button onClick={() => handleEdit(s)} className="px-3 py-1.5 bg-bg3 border border-border rounded-sm text-xs hover:border-green">
                       Modifier
                     </button>
                   </td>
@@ -103,12 +115,22 @@ const Stocks = () => {
           <form onSubmit={handleUpdate}>
             <div className="mb-3.5">
               <label className="text-text2 text-xs block mb-1.5">Quantité</label>
-              <input id="qte" type="number" defaultValue={selected.quantite} required 
+              <input 
+                id="qte" 
+                type="number" 
+                value={editForm.qte} 
+                onChange={(e) => setEditForm(prev => ({ ...prev, qte: e.target.value }))}
+                required 
                 className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
             </div>
             <div className="mb-5">
               <label className="text-text2 text-xs block mb-1.5">Seuil d'alerte</label>
-              <input id="seuil" type="number" defaultValue={selected.seuilAlerte} required 
+              <input 
+                id="seuil" 
+                type="number" 
+                value={editForm.seuil} 
+                onChange={(e) => setEditForm(prev => ({ ...prev, seuil: e.target.value }))}
+                required 
                 className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
             </div>
             <button type="submit" className="w-full bg-green text-black py-2.5 rounded-sm font-medium">Enregistrer</button>

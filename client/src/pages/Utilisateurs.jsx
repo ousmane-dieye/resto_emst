@@ -11,6 +11,7 @@ const Utilisateurs = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ nom: '', prenom: '', email: '', role: 'CUISINIER', poste: '' });
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -41,15 +42,16 @@ const Utilisateurs = () => {
     e.preventDefault();
     try {
       const newUser = await utilisateursApi.createStaff({
-        nom: document.getElementById('nom').value,
-        prenom: document.getElementById('prenom').value,
-        email: document.getElementById('email').value,
-        role: document.getElementById('role').value,
-        poste: document.getElementById('poste').value,
+        nom: form.nom,
+        prenom: form.prenom,
+        email: form.email,
+        role: form.role,
+        poste: form.poste,
       });
       setUsers(prev => [...prev, { ...newUser, motDePasse: undefined }]);
       alert(`Compte créé ! Mot de passe temporaire: ${newUser.motDePasseTemp}`);
       setModal(null);
+      setForm({ nom: '', prenom: '', email: '', role: 'CUISINIER', poste: '' });
     } catch (err) {
       showError(err.message);
     }
@@ -62,7 +64,16 @@ const Utilisateurs = () => {
   const actifs = users.filter(u => u.actif).length;
   const inactifs = users.filter(u => !u.actif).length;
 
-  const roleColors = { ETUDIANT: 'green', CUISINIER: 'orange', ADMINISTRATEUR: 'blue', SUPER_ADMIN: 'gold', GESTIONNAIRE: 'blue' };
+  const getRoleBadge = (role) => {
+    const styles = {
+      ETUDIANT: 'bg-green-dim text-green',
+      CUISINIER: 'bg-orange-dim text-orange',
+      ADMINISTRATEUR: 'bg-blue-dim text-blue',
+      SUPER_ADMIN: 'bg-gold-dim text-gold',
+      GESTIONNAIRE: 'bg-blue-dim text-blue'
+    };
+    return styles[role] || 'bg-bg3 text-text2';
+  };
 
   return (
     <div>
@@ -89,7 +100,7 @@ const Utilisateurs = () => {
                 <td className="p-3 font-medium">{u.prenom} {u.nom}</td>
                 <td className="p-3 text-text2">{u.email}</td>
                 <td className="p-3">
-                  <span className={`bg-${roleColors[u.role]}-dim text-${roleColors[u.role]} px-2 py-0.5 rounded text-xs`}>{u.role}</span>
+                  <span className={`${getRoleBadge(u.role)} px-2 py-0.5 rounded text-xs`}>{u.role}</span>
                 </td>
                 <td className="p-3 text-text2 text-xs">{new Date(u.dateCreation).toLocaleDateString('fr-FR')}</td>
                 <td className="p-3">
@@ -114,25 +125,46 @@ const Utilisateurs = () => {
         </table>
       </div>
 
-      <Modal isOpen={modal === 'add'} onClose={() => setModal(null)} title="Ajouter staff">
+      <Modal isOpen={modal === 'add'} onClose={() => { setModal(null); setForm({ nom: '', prenom: '', email: '', role: 'CUISINIER', poste: '' }); }} title="Ajouter staff">
         <form onSubmit={handleAdd}>
           <div className="grid grid-cols-2 gap-3 mb-3.5">
             <div>
               <label className="text-text2 text-xs block mb-1.5">Nom</label>
-              <input id="nom" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
+              <input 
+                id="nom" 
+                required 
+                value={form.nom}
+                onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
+                className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
             </div>
             <div>
               <label className="text-text2 text-xs block mb-1.5">Prénom</label>
-              <input id="prenom" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
+              <input 
+                id="prenom" 
+                required 
+                value={form.prenom}
+                onChange={(e) => setForm(prev => ({ ...prev, prenom: e.target.value }))}
+                className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
             </div>
           </div>
           <div className="mb-3.5">
             <label className="text-text2 text-xs block mb-1.5">Email</label>
-            <input id="email" type="email" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
+            <input 
+              id="email" 
+              type="email" 
+              required 
+              value={form.email}
+              onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+              className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <div className="mb-3.5">
             <label className="text-text2 text-xs block mb-1.5">Rôle</label>
-            <select id="role" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm">
+            <select 
+              id="role" 
+              required 
+              value={form.role}
+              onChange={(e) => setForm(prev => ({ ...prev, role: e.target.value }))}
+              className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm">
               <option value="CUISINIER">Cuisinier</option>
               <option value="ADMINISTRATEUR">Administrateur</option>
               <option value="GESTIONNAIRE">Gestionnaire</option>
@@ -140,7 +172,12 @@ const Utilisateurs = () => {
           </div>
           <div className="mb-5">
             <label className="text-text2 text-xs block mb-1.5">Poste</label>
-            <input id="poste" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
+            <input 
+              id="poste" 
+              required 
+              value={form.poste}
+              onChange={(e) => setForm(prev => ({ ...prev, poste: e.target.value }))}
+              className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <button type="submit" className="w-full bg-green text-black py-2.5 rounded-sm font-medium">Ajouter</button>
         </form>

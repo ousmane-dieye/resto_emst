@@ -1,8 +1,10 @@
+import { Component } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import ToastContainer from './components/Toast';
 import Layout from './components/Layout';
+import ErrorFallback from './components/ErrorFallback';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Menu from './pages/Menu';
@@ -15,6 +17,28 @@ import Fournisseurs from './pages/Fournisseurs';
 import Utilisateurs from './pages/Utilisateurs';
 import Prediction from './pages/Prediction';
 import { useAuth } from './context/AuthContext';
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <ErrorFallback message="Une erreur inattendue s'est produite" />;
+    }
+    return this.props.children;
+  }
+}
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -91,14 +115,16 @@ const AppRoutes = () => {
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ToastProvider>
-          <AppRoutes />
-          <ToastContainer />
-        </ToastProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <ToastProvider>
+            <AppRoutes />
+            <ToastContainer />
+          </ToastProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

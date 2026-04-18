@@ -35,7 +35,7 @@ router.post('/', authMiddleware(studentRole), (req, res) => {
       notePortion: parseInt(notePortion),
       commentaire: commentaire || '',
       dateSoumission: new Date(),
-      pointsCredites: config.POINTS_FEEDBACK,
+      pointsCredites: config.points.feedback,
     };
     
     db.feedbacks.push(feedback);

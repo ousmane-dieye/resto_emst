@@ -1,0 +1,346 @@
+{
+  "utilisateurs": [
+    {
+      "id": "3dfff691-e4bd-4aee-a0c6-263a7d6ac3ce",
+      "nom": "Admin",
+      "prenom": "Super",
+      "email": "admin@esmt.sn",
+      "motDePasse": "$2a$10$qlPVqo5.m2p/NKVorof8l.ojQenZQ0rNw/G8icQ94ILMSlE5YQFF2",
+      "role": "SUPER_ADMIN",
+      "actif": true,
+      "dateCreation": "2026-04-18T00:46:49.920Z",
+      "niveauAcces": "SUPER",
+      "estSuperAdmin": true
+    },
+    {
+      "id": "c84dce20-3f98-4875-ad3c-4be5fac45181",
+      "nom": "Diallo",
+      "prenom": "Mamadou",
+      "email": "cuisinier@esmt.sn",
+      "motDePasse": "$2a$10$uSLOASvKjL9oEoBGbdyPceSEk5rAnfICxpgg10s/9Q2rfhZll2LJ6",
+      "role": "CUISINIER",
+      "actif": true,
+      "dateCreation": "2026-04-18T00:46:50.017Z",
+      "poste": "Chef Principal"
+    },
+    {
+      "id": "21a153d1-b3c4-4007-83be-11124b7aea8f",
+      "nom": "Faye",
+      "prenom": "Moussa",
+      "email": "moussa.faye@etu.esmt.sn",
+      "motDePasse": "$2a$10$gIIpMKgUV7qMXEbUDOG66.Phgr3.msuFpZ3w5jE12aBnpR2bIajo6",
+      "role": "ETUDIANT",
+      "actif": true,
+      "emailVerifie": true,
+      "dateCreation": "2026-04-18T01:05:45.123Z",
+      "numeroEtudiant": "ETU2024001",
+      "classe": "Licence 3",
+      "filiere": "Informatique",
+      "allergenes": [
+        "gluten",
+        "arachides"
+      ],
+      "autresRestrictions": "",
+      "pointsESMT": 120,
+      "niveauFidelite": "BRONZE"
+    },
+    {
+      "id": "54c9fa87-4272-4a16-ba7b-a99ea2ef1f3d",
+      "nom": "Ndiaye",
+      "prenom": "Moussa",
+      "email": "mn@etu.esmt.sn",
+      "motDePasse": "$2a$10$.8XyN4NdqXtsLiW6Nhr3vuB7emzTmvsJEOndlGu8k1UmSQ4V0wcsm",
+      "role": "ETUDIANT",
+      "actif": true,
+      "emailVerifie": true,
+      "dateCreation": "2026-04-18T02:22:11.467Z",
+      "numeroEtudiant": "E003",
+      "classe": "L3",
+      "filiere": "Info",
+      "allergenes": [],
+      "autresRestrictions": "",
+      "pointsESMT": 100,
+      "niveauFidelite": "BRONZE"
+    }
+  ],
+  "plats": [
+    {
+      "id": "7923ff22-c04f-4333-b267-01091d3f1636",
+      "nom": "Thiéboudienne",
+      "description": "Riz au poisson sénégalais",
+      "prixFCFA": 1500,
+      "allergenes": [
+        "poisson"
+      ],
+      "estDisponible": true,
+      "estRepasEco": false,
+      "noteMoyenne": 4.7,
+      "categorie": "plat_principal",
+      "emoji": "🐟",
+      "createdAt": "2026-04-18T00:46:49.787Z"
+    },
+    {
+      "id": "a6126087-0445-4eee-903c-252626de7eca",
+      "nom": "Yassa Poulet",
+      "description": "Poulet mariné aux oignons et citron",
+      "prixFCFA": 1200,
+      "allergenes": [],
+      "estDisponible": true,
+      "estRepasEco": false,
+      "noteMoyenne": 4.7,
+      "categorie": "plat_principal",
+      "emoji": "🍗",
+      "createdAt": "2026-04-18T00:46:49.787Z"
+    },
+    {
+      "id": "62ec8d26-8962-448e-a6e9-a94e8c69fc52",
+      "nom": "Mafé",
+      "description": "Ragoût à la pâte d'arachide",
+      "prixFCFA": 1000,
+      "allergenes": [
+        "arachides"
+      ],
+      "estDisponible": true,
+      "estRepasEco": false,
+      "noteMoyenne": 4.3,
+      "categorie": "plat_principal",
+      "emoji": "🥜",
+      "createdAt": "2026-04-18T00:46:49.787Z"
+    },
+    {
+      "id": "37df76ef-7a86-4b56-92d0-e2c682e4de77",
+      "nom": "Salade Composée",
+      "description": "Salade fraîche de saison",
+      "prixFCFA": 500,
+      "allergenes": [],
+      "estDisponible": true,
+      "estRepasEco": false,
+      "noteMoyenne": 4,
+      "categorie": "entree",
+      "emoji": "🥗",
+      "createdAt": "2026-04-18T00:46:49.787Z"
+    },
+    {
+      "id": "b83a3328-fbc2-47be-9c6d-708e918886ae",
+      "nom": "Jus de Bissap",
+      "description": "Jus d'hibiscus maison",
+      "prixFCFA": 300,
+      "allergenes": [],
+      "estDisponible": true,
+      "estRepasEco": false,
+      "noteMoyenne": 4.8,
+      "categorie": "boisson",
+      "emoji": "🍹",
+      "createdAt": "2026-04-18T00:46:49.787Z"
+    },
+    {
+      "id": "52b4c630-a10b-4dc8-9102-80f9614ad1c5",
+      "nom": "Repas Eco",
+      "description": "Plat du jour anti-gaspillage -30%",
+      "prixFCFA": 700,
+      "allergenes": [],
+      "estDisponible": true,
+      "estRepasEco": true,
+      "noteMoyenne": 4.1,
+      "categorie": "plat_principal",
+      "emoji": "♻️",
+      "createdAt": "2026-04-18T00:46:49.787Z"
+    },
+    {
+      "id": "c2eef719-25db-41b9-9281-aa3f2b1b58f8",
+      "nom": "Attieke",
+      "description": "Riz fermenté",
+      "prixFCFA": 900,
+      "categorie": "plat_principal",
+      "allergenes": [
+        "manioc"
+      ],
+      "estDisponible": true,
+      "estRepasEco": false,
+      "noteMoyenne": 0,
+      "emoji": "",
+      "createdAt": "2026-04-18T01:06:26.500Z",
+      "updatedAt": "2026-04-18T01:06:31.554Z"
+    }
+  ],
+  "commandes": [
+    {
+      "id": "9d46db15-b61f-4fed-aad9-67f296d82300",
+      "etudiantId": "21a153d1-b3c4-4007-83be-11124b7aea8f",
+      "platId": "a6126087-0445-4eee-903c-252626de7eca",
+      "creneauId": "ae314841-453b-4730-8c93-93d48b77046b",
+      "dateHeure": "2026-04-18T01:06:16.750Z",
+      "statut": "PRETE",
+      "montantFCFA": 1200,
+      "pointsGagnes": 15,
+      "methodePaiement": "WAVE",
+      "qrCode": "data:image/png;base64,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",
+      "qrExpireA": "2026-04-18T03:06:16.750Z",
+      "typeCommande": "EN_LIGNE",
+      "createdAt": "2026-04-18T01:06:16.750Z",
+      "updatedAt": "2026-04-18T01:06:47.750Z"
+    }
+  ],
+  "paiements": [
+    {
+      "id": "4d3c736e-34f8-490c-8c03-6006b7b6cc82",
+      "commandeId": "9d46db15-b61f-4fed-aad9-67f296d82300",
+      "montantFCFA": 1200,
+      "methode": "WAVE",
+      "statut": "CONFIRME",
+      "referenceExterne": "PAY-1776474376750",
+      "dateHeure": "2026-04-18T01:06:16.750Z"
+    }
+  ],
+  "feedbacks": [
+    {
+      "id": "3c1ba261-b4a4-4bdf-a8d4-1383713ff9a1",
+      "commandeId": "9d46db15-b61f-4fed-aad9-67f296d82300",
+      "etudiantId": "21a153d1-b3c4-4007-83be-11124b7aea8f",
+      "noteGout": 5,
+      "noteTemperature": 4,
+      "notePortion": 5,
+      "commentaire": "Excellent!",
+      "dateSoumission": "2026-04-18T01:06:57.131Z",
+      "pointsCredites": 5
+    }
+  ],
+  "stocks": [
+    {
+      "id": "aa321ae9-fd83-44dc-8636-e40523527a68",
+      "ingredient": "Riz",
+      "quantite": 50,
+      "unite": "kg",
+      "seuilAlerte": 10,
+      "estCritique": false,
+      "dernierMaj": "2026-04-18T00:46:49.787Z"
+    },
+    {
+      "id": "b66a299b-5678-42e9-b031-079432c3ddf3",
+      "ingredient": "Poisson",
+      "quantite": 8,
+      "unite": "kg",
+      "seuilAlerte": 5,
+      "estCritique": false,
+      "dernierMaj": "2026-04-18T00:46:49.793Z"
+    },
+    {
+      "id": "66ddb600-a125-47e0-bde7-82d1ba364452",
+      "ingredient": "Poulet",
+      "quantite": 4,
+      "unite": "kg",
+      "seuilAlerte": 5,
+      "estCritique": true,
+      "dernierMaj": "2026-04-18T00:46:49.793Z"
+    },
+    {
+      "id": "a4c4f46b-c7f3-4084-82a6-da826b7e62c8",
+      "ingredient": "Oignons",
+      "quantite": 15,
+      "unite": "kg",
+      "seuilAlerte": 3,
+      "estCritique": false,
+      "dernierMaj": "2026-04-18T00:46:49.793Z"
+    },
+    {
+      "id": "056d13e5-b7a2-420f-9c37-0f5a3cb9269c",
+      "ingredient": "Tomates",
+      "quantite": 2,
+      "unite": "kg",
+      "seuilAlerte": 3,
+      "estCritique": true,
+      "dernierMaj": "2026-04-18T00:46:49.793Z"
+    },
+    {
+      "id": "7c3f98ae-8c33-4775-975b-324b4f97ce8e",
+      "ingredient": "Pâte d'arachide",
+      "quantite": 6,
+      "unite": "kg",
+      "seuilAlerte": 2,
+      "estCritique": false,
+      "dernierMaj": "2026-04-18T00:46:49.793Z"
+    }
+  ],
+  "fournisseurs": [
+    {
+      "id": "f4641309-68df-45dc-92ca-83a35f502eff",
+      "nom": "Marché Sandaga",
+      "contact": "+221 77 123 45 67",
+      "delaiLivraison": 1,
+      "ingredientsFournis": [
+        "Légumes",
+        "Poisson",
+        "Viande"
+      ],
+      "createdAt": "2026-04-18T00:46:49.793Z"
+    },
+    {
+      "id": "c60ed749-4d70-4e7c-a90f-1dd12b8013a0",
+      "nom": "SEDIMA",
+      "contact": "+221 33 456 78 90",
+      "delaiLivraison": 2,
+      "ingredientsFournis": [
+        "Poulet",
+        "Oeufs"
+      ],
+      "createdAt": "2026-04-18T00:46:49.793Z"
+    }
+  ],
+  "creneaux": [
+    {
+      "id": "ae314841-453b-4730-8c93-93d48b77046b",
+      "heureDebut": "07:30",
+      "heureFin": "09:00",
+      "capaciteMax": 80,
+      "nbReservations": 23,
+      "estCreneauCalme": false,
+      "bonusPoints": 5
+    },
+    {
+      "id": "3a4888cd-7ec4-44b0-bffd-b397aa6d334a",
+      "heureDebut": "09:00",
+      "heureFin": "10:30",
+      "capaciteMax": 80,
+      "nbReservations": 12,
+      "estCreneauCalme": true,
+      "bonusPoints": 20
+    },
+    {
+      "id": "28b65f14-7afe-43c7-a1f5-bb29c94ad835",
+      "heureDebut": "12:00",
+      "heureFin": "13:30",
+      "capaciteMax": 150,
+      "nbReservations": 134,
+      "estCreneauCalme": false,
+      "bonusPoints": 5
+    },
+    {
+      "id": "785a576b-b83d-4777-b6da-8ae6cf16dcbc",
+      "heureDebut": "13:30",
+      "heureFin": "15:00",
+      "capaciteMax": 150,
+      "nbReservations": 45,
+      "estCreneauCalme": true,
+      "bonusPoints": 15
+    }
+  ],
+  "notifications": [
+    {
+      "id": "9638c4ca-c7a7-4cfc-8ff0-854a1ea753e1",
+      "type": "COMMANDE_CONFIRMEE",
+      "message": "Commande confirmée ! +15 points ESMT",
+      "destinataire": "21a153d1-b3c4-4007-83be-11124b7aea8f",
+      "lue": false,
+      "dateEnvoi": "2026-04-18T01:06:16.750Z"
+    },
+    {
+      "id": "f20e13a1-fc9c-44d0-8c6c-54d2e271be31",
+      "type": "COMMANDE_PRETE",
+      "message": "Votre commande est prête !",
+      "destinataire": "21a153d1-b3c4-4007-83be-11124b7aea8f",
+      "lue": false,
+      "dateEnvoi": "2026-04-18T01:06:47.750Z"
+    }
+  ],
+  "pointsESMT": []
+}

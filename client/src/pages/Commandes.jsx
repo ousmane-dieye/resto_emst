@@ -12,6 +12,7 @@ const Commandes = () => {
   const [loading, setLoading] = useState(true);
   const [qrModal, setQrModal] = useState(null);
   const [feedbackModal, setFeedbackModal] = useState(null);
+  const [feedbackForm, setFeedbackForm] = useState({ noteGout: 4, noteTemperature: 4, notePortion: 4, commentaire: '' });
 
   const fetchCommandes = useCallback(async () => {
     try {
@@ -33,14 +34,15 @@ const Commandes = () => {
     try {
       await feedbackApi.create({
         commandeId: feedbackModal,
-        noteGout: parseInt(document.getElementById('noteGout').value),
-        noteTemperature: parseInt(document.getElementById('noteTemp').value),
-        notePortion: parseInt(document.getElementById('notePortion').value),
-        commentaire: document.getElementById('commentaire').value,
+        noteGout: parseInt(feedbackForm.noteGout),
+        noteTemperature: parseInt(feedbackForm.noteTemperature),
+        notePortion: parseInt(feedbackForm.notePortion),
+        commentaire: feedbackForm.commentaire,
       });
       success('Merci pour votre avis ! +5 points');
       await refreshUser();
       setFeedbackModal(null);
+      setFeedbackForm({ noteGout: 4, noteTemperature: 4, notePortion: 4, commentaire: '' });
     } catch (err) {
       showError(err.message);
     }
@@ -92,26 +94,26 @@ const Commandes = () => {
         )}
       </Modal>
 
-      <Modal isOpen={!!feedbackModal} onClose={() => setFeedbackModal(null)} title="📝 Évaluer">
+      <Modal isOpen={!!feedbackModal} onClose={() => { setFeedbackModal(null); setFeedbackForm({ noteGout: 4, noteTemperature: 4, notePortion: 4, commentaire: '' }); }} title="📝 Évaluer">
         <form onSubmit={handleFeedback}>
           <div className="mb-3.5">
             <label className="text-text2 text-xs block mb-1.5">Goût (1-5)</label>
-            <input id="noteGout" type="number" min="1" max="5" defaultValue="4" required 
+            <input id="noteGout" type="number" min="1" max="5" value={feedbackForm.noteGout} onChange={(e) => setFeedbackForm(prev => ({ ...prev, noteGout: e.target.value }))} required 
               className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <div className="mb-3.5">
             <label className="text-text2 text-xs block mb-1.5">Température (1-5)</label>
-            <input id="noteTemp" type="number" min="1" max="5" defaultValue="4" required 
+            <input id="noteTemp" type="number" min="1" max="5" value={feedbackForm.noteTemperature} onChange={(e) => setFeedbackForm(prev => ({ ...prev, noteTemperature: e.target.value }))} required 
               className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <div className="mb-3.5">
             <label className="text-text2 text-xs block mb-1.5">Portion (1-5)</label>
-            <input id="notePortion" type="number" min="1" max="5" defaultValue="4" required 
+            <input id="notePortion" type="number" min="1" max="5" value={feedbackForm.notePortion} onChange={(e) => setFeedbackForm(prev => ({ ...prev, notePortion: e.target.value }))} required 
               className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <div className="mb-5">
             <label className="text-text2 text-xs block mb-1.5">Commentaire</label>
-            <textarea id="commentaire" className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm h-20" />
+            <textarea id="commentaire" value={feedbackForm.commentaire} onChange={(e) => setFeedbackForm(prev => ({ ...prev, commentaire: e.target.value }))} className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm h-20" />
           </div>
           <button type="submit" className="w-full bg-green text-black py-2.5 rounded-sm font-medium">Envoyer</button>
         </form>

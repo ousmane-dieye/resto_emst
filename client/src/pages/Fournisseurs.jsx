@@ -10,6 +10,7 @@ const Fournisseurs = () => {
   const [fourns, setFourns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ nom: '', contact: '', delai: 1, ingredients: '' });
 
   const fetchFourns = useCallback(async () => {
     try {
@@ -30,14 +31,15 @@ const Fournisseurs = () => {
     e.preventDefault();
     try {
       const newFourn = await fournisseursApi.create({
-        nom: document.getElementById('nom').value,
-        contact: document.getElementById('contact').value,
-        delaiLivraison: parseInt(document.getElementById('delai').value),
-        ingredientsFournis: document.getElementById('ingredients').value.split(',').map(i => i.trim()),
+        nom: form.nom,
+        contact: form.contact,
+        delaiLivraison: parseInt(form.delai),
+        ingredientsFournis: form.ingredients.split(',').map(i => i.trim()),
       });
       setFourns(prev => [...prev, newFourn]);
       success('Fournisseur ajouté');
       setModal(null);
+      setForm({ nom: '', contact: '', delai: 1, ingredients: '' });
     } catch (err) {
       showError(err.message);
     }
@@ -70,23 +72,45 @@ const Fournisseurs = () => {
         ))}
       </div>
 
-      <Modal isOpen={modal === 'add'} onClose={() => setModal(null)} title="Nouveau fournisseur">
+      <Modal isOpen={modal === 'add'} onClose={() => { setModal(null); setForm({ nom: '', contact: '', delai: 1, ingredients: '' }); }} title="Nouveau fournisseur">
         <form onSubmit={handleAdd}>
           <div className="mb-3.5">
             <label className="text-text2 text-xs block mb-1.5">Nom</label>
-            <input id="nom" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
+            <input 
+              id="nom" 
+              required 
+              value={form.nom}
+              onChange={(e) => setForm(prev => ({ ...prev, nom: e.target.value }))}
+              className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <div className="mb-3.5">
             <label className="text-text2 text-xs block mb-1.5">Contact</label>
-            <input id="contact" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
+            <input 
+              id="contact" 
+              required 
+              value={form.contact}
+              onChange={(e) => setForm(prev => ({ ...prev, contact: e.target.value }))}
+              className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <div className="mb-3.5">
             <label className="text-text2 text-xs block mb-1.5">Délai (jours)</label>
-            <input id="delai" type="number" defaultValue={1} required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
+            <input 
+              id="delai" 
+              type="number" 
+              value={form.delai}
+              onChange={(e) => setForm(prev => ({ ...prev, delai: e.target.value }))}
+              required 
+              className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <div className="mb-5">
             <label className="text-text2 text-xs block mb-1.5">Ingrédients (séparés par virgule)</label>
-            <input id="ingredients" placeholder="Riz, Poulet, Légumes" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
+            <input 
+              id="ingredients" 
+              placeholder="Riz, Poulet, Légumes" 
+              required 
+              value={form.ingredients}
+              onChange={(e) => setForm(prev => ({ ...prev, ingredients: e.target.value }))}
+              className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm" />
           </div>
           <button type="submit" className="w-full bg-green text-black py-2.5 rounded-sm font-medium">Ajouter</button>
         </form>

@@ -14,6 +14,7 @@ const Menu = () => {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [selectedPlat, setSelectedPlat] = useState(null);
+  const [commandeForm, setCommandeForm] = useState({ creneau: '', paiement: 'WAVE' });
 
   const isAdmin = ['SUPER_ADMIN', 'ADMINISTRATEUR', 'CUISINIER'].includes(user?.role);
 
@@ -50,11 +51,12 @@ const Menu = () => {
     try {
       const data = await commandesApi.create({
         platId: selectedPlat.id,
-        creneauId: document.getElementById('creneau').value,
-        methodePaiement: document.getElementById('paiement').value,
+        creneauId: commandeForm.creneau,
+        methodePaiement: commandeForm.paiement,
       });
       success(`Commande confirmée ! +${data.commande.pointsGagnes} points`);
       setModal(null);
+      setCommandeForm({ creneau: '', paiement: 'WAVE' });
     } catch (err) {
       showError(err.message);
     }
@@ -120,7 +122,7 @@ const Menu = () => {
         })}
       </div>
 
-      <Modal isOpen={modal === 'commander' && selectedPlat} onClose={() => { setModal(null); setSelectedPlat(null); }} title={`${selectedPlat?.emoji || '🍽'} Commander`}>
+      <Modal isOpen={modal === 'commander' && selectedPlat} onClose={() => { setModal(null); setSelectedPlat(null); setCommandeForm({ creneau: '', paiement: 'WAVE' }); }} title={`${selectedPlat?.emoji || '🍽'} Commander`}>
         {selectedPlat && (
           <form onSubmit={handleCommander}>
             <div className="text-center mb-5 p-5 bg-bg3 rounded-sm">
@@ -131,7 +133,12 @@ const Menu = () => {
             </div>
             <div className="mb-3.5">
               <label className="text-text2 text-xs block mb-1.5">Créneau de retrait</label>
-              <select id="creneau" required className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green">
+              <select 
+                id="creneau" 
+                required 
+                value={commandeForm.creneau}
+                onChange={(e) => setCommandeForm(prev => ({ ...prev, creneau: e.target.value }))}
+                className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green">
                 <option value="">-- Choisir un créneau --</option>
                 {creneaux.map(c => (
                   <option key={c.id} value={c.id}>
@@ -142,7 +149,11 @@ const Menu = () => {
             </div>
             <div className="mb-5">
               <label className="text-text2 text-xs block mb-1.5">Méthode de paiement</label>
-              <select id="paiement" className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green">
+              <select 
+                id="paiement"
+                value={commandeForm.paiement}
+                onChange={(e) => setCommandeForm(prev => ({ ...prev, paiement: e.target.value }))}
+                className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green">
                 <option value="WAVE">💙 Wave</option>
                 <option value="ORANGE_MONEY">🟠 Orange Money</option>
                 <option value="CARTE">💳 Carte</option>

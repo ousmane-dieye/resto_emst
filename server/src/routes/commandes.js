@@ -60,7 +60,7 @@ router.post('/', authMiddleware(['ETUDIANT']), async (req, res) => {
       return res.status(400).json({ error: 'Créneau invalide', code: 'CRENEAU_INVALID' });
     }
     
-    const pointsGagnes = config.POINTS_COMMANDE + (creneau?.bonusPoints || 0);
+    const pointsGagnes = config.points.commande + (creneau?.bonusPoints || 0);
     const commandeId = uuidv4();
     const qrData = JSON.stringify({ commandeId, etudiantId: req.user.id, platId, timestamp: Date.now() });
     const qrCode = await QRCode.toDataURL(qrData);
@@ -75,7 +75,7 @@ router.post('/', authMiddleware(['ETUDIANT']), async (req, res) => {
       montantFCFA: plat.prixFCFA,
       pointsGagnes,
       qrCode,
-      qrExpireA: new Date(Date.now() + config.QR_CODE_EXPIRY),
+      qrExpireA: new Date(Date.now() + config.qrCode.expirationMinutes * 60000),
       typeCommande: 'EN_LIGNE',
     };
     
@@ -144,9 +144,9 @@ router.get('/bons-preparation', authMiddleware(['CUISINIER', 'SUPER_ADMIN']), (r
 });
 
 function updateNiveauFidelite(etudiant) {
-  if (etudiant.pointsESMT >= config.SEUIL_NIVEAUX.OR) {
+  if (etudiant.pointsESMT >= config.seuils.OR) {
     etudiant.niveauFidelite = 'OR';
-  } else if (etudiant.pointsESMT >= config.SEUIL_NIVEAUX.ARGENT) {
+  } else if (etudiant.pointsESMT >= config.seuils.ARGENT) {
     etudiant.niveauFidelite = 'ARGENT';
   } else {
     etudiant.niveauFidelite = 'BRONZE';

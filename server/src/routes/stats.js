@@ -1,4 +1,5 @@
 import express from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { db } from '../config/database.js';
 import { authMiddleware } from '../middleware/auth.js';
 
@@ -52,7 +53,5 @@ router.get('/prediction', authMiddleware(adminRoles), (req, res) => {
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
   }
 });
-
-import { v4 as uuidv4 } from 'uuid';
 
 export default router;

@@ -1,3 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+const PORT = parseInt(process.env.PORT) || 3001;
+
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
@@ -20,7 +25,10 @@ import statsRoutes from './routes/stats.js';
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN === '*' ? true : process.env.CORS_ORIGIN || false,
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -59,8 +67,8 @@ const initSuperAdmin = async () => {
       poste: 'Chef Principal',
     });
     
-    console.log('Super admin initialized: admin@esmt.sn / admin123');
-    console.log('Cuisinier initialized: cuisinier@esmt.sn / cuisine123');
+    console.log('Super admin initialized: admin@esmt.sn');
+    console.log('Cuisinier initialized: cuisinier@esmt.sn');
   }
 };
 
@@ -84,7 +92,7 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route non trouvée', code: 'NOT_FOUND' });
 });
 
-app.listen(config.PORT, () => {
+app.listen(PORT, () => {
   initSuperAdmin();
-  console.log(`SmartResto Backend running on http://localhost:${config.PORT}`);
+  console.log(`SmartResto Backend running on http://localhost:${PORT}`);
 });

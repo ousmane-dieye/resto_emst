@@ -9,9 +9,23 @@ const Auth = ({ register: isRegister = false }) => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(!isRegister);
   const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    nom: '',
+    prenom: '',
+    num: '',
+    classe: '',
+    filiere: '',
+    autres: ''
+  });
   const [selectedAllergenes, setSelectedAllergenes] = useState([]);
 
   const allergenes = ['Arachides', 'Lactose', 'Gluten', 'Fruits de mer', 'Œufs', 'Soja'];
+
+  const handleChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
+  };
 
   const toggleAllerg = (a) => {
     setSelectedAllergenes(prev => 
@@ -23,7 +37,7 @@ const Auth = ({ register: isRegister = false }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(document.getElementById('email').value, document.getElementById('password').value);
+      await login(formData.email, formData.password);
       success('Connexion réussie !');
     } catch (err) {
       showError(err.message || 'Erreur de connexion');
@@ -36,15 +50,15 @@ const Auth = ({ register: isRegister = false }) => {
     setLoading(true);
     try {
       await registerUser({
-        nom: document.getElementById('nom').value,
-        prenom: document.getElementById('prenom').value,
-        email: document.getElementById('email').value,
-        motDePasse: document.getElementById('password').value,
-        numeroEtudiant: document.getElementById('num').value,
-        classe: document.getElementById('classe').value,
-        filiere: document.getElementById('filiere').value,
+        nom: formData.nom,
+        prenom: formData.prenom,
+        email: formData.email,
+        motDePasse: formData.password,
+        numeroEtudiant: formData.num,
+        classe: formData.classe,
+        filiere: formData.filiere,
         allergenes: selectedAllergenes,
-        autresRestrictions: document.getElementById('autres').value,
+        autresRestrictions: formData.autres,
       });
       success('Compte créé ! Connectez-vous.');
       setIsLogin(true);
@@ -82,11 +96,13 @@ const Auth = ({ register: isRegister = false }) => {
             <div className="mb-3.5">
               <label className="text-text2 text-xs block mb-1.5">Email institutionnel</label>
               <input id="email" type="email" placeholder="prenom.nom@esmt.sn" required
+                value={formData.email} onChange={handleChange}
                 className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
             </div>
             <div className="mb-5">
               <label className="text-text2 text-xs block mb-1.5">Mot de passe</label>
               <input id="password" type="password" placeholder="••••••••" required
+                value={formData.password} onChange={handleChange}
                 className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
             </div>
             <button type="submit" disabled={loading}
@@ -104,39 +120,46 @@ const Auth = ({ register: isRegister = false }) => {
               <div>
                 <label className="text-text2 text-xs block mb-1.5">Nom</label>
                 <input id="nom" placeholder="Diallo" required
+                  value={formData.nom} onChange={handleChange}
                   className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
               </div>
               <div>
                 <label className="text-text2 text-xs block mb-1.5">Prénom</label>
                 <input id="prenom" placeholder="Fatou" required
+                  value={formData.prenom} onChange={handleChange}
                   className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
               </div>
             </div>
             <div className="mb-3.5">
               <label className="text-text2 text-xs block mb-1.5">Email ESMT</label>
               <input id="email" type="email" placeholder="fatou.diallo@esmt.sn" required
+                value={formData.email} onChange={handleChange}
                 className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
             </div>
             <div className="mb-3.5">
               <label className="text-text2 text-xs block mb-1.5">Mot de passe</label>
               <input id="password" type="password" placeholder="••••••••" required
+                value={formData.password} onChange={handleChange}
                 className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
             </div>
             <div className="grid grid-cols-2 gap-3 mb-3.5">
               <div>
                 <label className="text-text2 text-xs block mb-1.5">Numéro étudiant</label>
                 <input id="num" placeholder="ESMT-2024-XXX"
+                  value={formData.num} onChange={handleChange}
                   className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
               </div>
               <div>
                 <label className="text-text2 text-xs block mb-1.5">Classe</label>
                 <input id="classe" placeholder="MBA1"
+                  value={formData.classe} onChange={handleChange}
                   className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
               </div>
             </div>
             <div className="mb-3.5">
               <label className="text-text2 text-xs block mb-1.5">Filière</label>
               <input id="filiere" placeholder="Marketing Digital"
+                value={formData.filiere} onChange={handleChange}
                 className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green" />
             </div>
             <div className="mb-3.5">
@@ -155,6 +178,7 @@ const Auth = ({ register: isRegister = false }) => {
             <div className="mb-5">
               <label className="text-text2 text-xs block mb-1.5">Autres restrictions</label>
               <textarea id="autres" placeholder="Végétarien, halal..."
+                value={formData.autres} onChange={handleChange}
                 className="w-full bg-bg3 border border-border rounded-sm p-2.5 text-sm text-text outline-none focus:border-green resize-none h-20" />
             </div>
             <button type="submit" disabled={loading}
