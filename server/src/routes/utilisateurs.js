@@ -1,17 +1,17 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '../config/database.js';
+import { query } from '../config/database.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
 const adminRoles = ['SUPER_ADMIN', 'ADMINISTRATEUR'];
 
-router.get('/', authMiddleware(adminRoles), (req, res) => {
+router.get('/', authMiddleware(adminRoles), async (req, res) => {
   try {
-    const users = db.utilisateurs.map(({ motDePasse, ...u }) => u);
-    res.json(users);
+    const utilisateurs = await query("SELECT id, nom, prenom, email, role, actif, dateCreation, numeroEtudiant, classe, filiere, pointsESMT, niveauFidelite FROM utilisateurs ORDER BY dateCreation DESC");
+    res.json(utilisateurs);
   } catch (error) {
     console.error('Get utilisateurs error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
@@ -23,52 +23,46 @@ router.post('/staff', authMiddleware(adminRoles), async (req, res) => {
     const { nom, prenom, email, role, poste } = req.body;
     
     if (!nom || !prenom || !email || !role) {
-      return res.status(400).json({ error: 'Champs requis', code: 'MISSING_FIELDS' });
+      return res.status(400).json({ error: 'Champs requis manquants', code: 'MISSING_FIELDS' });
     }
     
-    const validRoles = ['CUISINIER', 'ADMINISTRATEUR', 'GESTIONNAIRE'];
-    if (!validRoles.includes(role)) {
-      return res.status(400).json({ error: 'Rôle invalide', code: 'INVALID_ROLE' });
+    const [existing] = await query("SELECT * FROM utilisateurs WHERE email = ?", [email]);
+    if (existing) {
+      return res.status(400).json({ error: 'Email déjà utilisé', code: 'EMAIL_EXISTS' });
     }
     
     const motDePasse = Math.random().toString(36).slice(-8);
     const hash = await bcrypt.hash(motDePasse, 10);
     
-    const staff = {
-      id: uuidv4(),
-      nom,
-      prenom,
-      email,
-      motDePasse: hash,
-      role,
-      poste: poste || '',
-      actif: true,
-      dateCreation: new Date(),
-    };
+    const id = uuidv4();
+    await query(
+      `INSERT INTO utilisateurs (id, nom, prenom, email, motDePasse, role, actif, poste, dateCreation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, nom, prenom, email, hash, role, true, poste || '', new Date()]
+    );
     
-    db.utilisateurs.push(staff);
-    res.status(201).json({ ...staff, motDePasseTemp: motDePasse, motDePasse: undefined });
+    const [users] = await query('SELECT * FROM utilisateurs WHERE id = ?', [id]);
+    delete users[0].motDePasse;
+    
+    res.status(201).json({ ...users[0], motDePasseTemp: motDePasse });
   } catch (error) {
     console.error('Create staff error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
   }
 });
 
-router.put('/:id/toggle', authMiddleware(['SUPER_ADMIN']), (req, res) => {
+router.put('/:id/toggle', authMiddleware(['SUPER_ADMIN']), async (req, res) => {
   try {
     const { id } = req.params;
-    const user = db.utilisateurs.find(u => u.id === id);
     
-    if (!user) {
+    const [users] = await query('SELECT * FROM utilisateurs WHERE id = ?', [id]);
+    if (!users[0]) {
       return res.status(404).json({ error: 'Utilisateur introuvable', code: 'USER_NOT_FOUND' });
     }
     
-    if (user.id === req.user.id) {
-      return res.status(400).json({ error: 'Impossible de se désactiver', code: 'SELF_DISABLE' });
-    }
+    const newActif = !users[0].actif;
+    await query('UPDATE utilisateurs SET actif = ? WHERE id = ?', [newActif, id]);
     
-    user.actif = !user.actif;
-    res.json({ actif: user.actif });
+    res.json({ actif: newActif });
   } catch (error) {
     console.error('Toggle user error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });

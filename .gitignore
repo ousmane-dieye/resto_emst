@@ -1,3 +1,40 @@
-node_modules
-.env
+# Dependencies
+node_modules/
+*/node_modules/
 
+# Environment
+.env
+.server/*.env
+!.env.example
+
+# Data
+data/
+*.json
+!package.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
+*/dist/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+.nyc_output/
+
+# Misc
+*.tgz

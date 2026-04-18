@@ -1,6 +1,4 @@
 import jwt from 'jsonwebtoken';
-import { config } from '../config/index.js';
-import { db } from '../config/database.js';
 
 export const authMiddleware = (roles = []) => (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];

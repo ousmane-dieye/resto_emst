@@ -1,36 +1,43 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '../config/database.js';
+import { query } from '../config/database.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
 const adminRoles = ['SUPER_ADMIN', 'ADMINISTRATEUR', 'CUISINIER'];
 
-router.get('/', authMiddleware(adminRoles), (req, res) => {
+router.get('/', authMiddleware(adminRoles), async (req, res) => {
   try {
-    const today = new Date().toDateString();
-    const commandesAujourdhui = db.commandes.filter(c => new Date(c.dateHeure).toDateString() === today);
+    const today = new Date().toISOString().split('T')[0];
     
-    const stats = {
-      totalEtudiants: db.utilisateurs.filter(u => u.role === 'ETUDIANT').length,
-      commandesAujourdhui: commandesAujourdhui.length,
-      revenuAujourdhui: commandesAujourdhui.reduce((sum, c) => sum + c.montantFCFA, 0),
-      platsDisponibles: db.plats.filter(p => p.estDisponible).length,
-      stocksCritiques: db.stocks.filter(s => s.quantite <= s.seuilAlerte).length,
-      noteMoyenneGlobale: db.plats.reduce((sum, p) => sum + p.noteMoyenne, 0) / db.plats.length || 0,
-      totalCommandes: db.commandes.length,
-      recettesTotales: db.commandes.reduce((sum, c) => sum + c.montantFCFA, 0),
-    };
+    const [etudiants] = await query("SELECT COUNT(*) as total FROM utilisateurs WHERE role = 'ETUDIANT'");
+    const [commandesJour] = await query(
+      "SELECT COUNT(*) as total, COALESCE(SUM(montantFCFA), 0) as revenu FROM commandes WHERE DATE(dateHeure) = ?",
+      [today]
+    );
+    const [platsDispo] = await query("SELECT COUNT(*) as total FROM plats WHERE estDisponible = TRUE");
+    const [stocksCrit] = await query("SELECT COUNT(*) as total FROM stocks WHERE quantite <= seuilAlerte");
+    const [platsNotes] = await query("SELECT AVG(noteMoyenne) as moyenne FROM plats");
+    const [totalCom] = await query("SELECT COUNT(*) as total, COALESCE(SUM(montantFCFA), 0) as recette FROM commandes");
     
-    res.json(stats);
+    res.json({
+      totalEtudiants: etudiants[0].total,
+      commandesAujourdhui: commandesJour[0].total,
+      revenuAujourdhui: commandesJour[0].revenu,
+      platsDisponibles: platsDispo[0].total,
+      stocksCritiques: stocksCrit[0].total,
+      noteMoyenneGlobale: platsNotes[0].moyenne || 0,
+      totalCommandes: totalCom[0].total,
+      recettesTotales: totalCom[0].recette,
+    });
   } catch (error) {
     console.error('Get stats error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
   }
 });
 
-router.get('/prediction', authMiddleware(adminRoles), (req, res) => {
+router.get('/prediction', authMiddleware(adminRoles), async (req, res) => {
   try {
     const prediction = {
       id: uuidv4(),
@@ -43,9 +50,13 @@ router.get('/prediction', authMiddleware(adminRoles), (req, res) => {
         '13:30-15:00': Math.round(30 + Math.random() * 15),
       },
       tauxConfiance: 0.82 + Math.random() * 0.1,
-      surplusDetecte: db.stocks.some(s => s.quantite > s.seuilAlerte * 4),
-      stocksCritiques: db.stocks.filter(s => s.quantite <= s.seuilAlerte).map(s => s.ingredient),
+      surplusDetecte: false,
+      stocksCritiques: [],
     };
+    
+    const [stocks] = await query("SELECT ingredient FROM stocks WHERE quantite <= seuilAlerte");
+    prediction.stocksCritiques = stocks.map(s => s.ingredient);
+    prediction.surplusDetecte = stocks.length > 0;
     
     res.json(prediction);
   } catch (error) {

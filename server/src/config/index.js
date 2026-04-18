@@ -13,6 +13,12 @@ export const config = {
     secret: process.env.JWT_SECRET || 'smartresto_secret_change_in_production',
     expiresIn: process.env.JWT_EXPIRES_IN || '24h'
   },
+  db: {
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    name: process.env.DB_NAME || 'smartresto'
+  },
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
   },

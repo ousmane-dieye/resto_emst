@@ -1,27 +1,32 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import QRCode from 'qrcode';
-import { db } from '../config/database.js';
+import { query } from '../config/database.js';
 import { config } from '../config/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get('/', authMiddleware(), (req, res) => {
+router.get('/', authMiddleware(), async (req, res) => {
   try {
-    let commandes = [...db.commandes];
+    let sql = `
+      SELECT c.*, p.nom as platNom, p.description as platDescription, p.prixFCFA as platPrix, p.emoji as platEmoji,
+             cr.heureDebut, cr.heureFin, cr.capaciteMax
+      FROM commandes c
+      LEFT JOIN plats p ON c.platId = p.id
+      LEFT JOIN creneaux cr ON c.creneauId = cr.id
+    `;
+    const params = [];
     
     if (req.user.role === 'ETUDIANT') {
-      commandes = commandes.filter(c => c.etudiantId === req.user.id);
+      sql += ' WHERE c.etudiantId = ?';
+      params.push(req.user.id);
     }
     
-    const enriched = commandes.map(c => ({
-      ...c,
-      plat: db.plats.find(p => p.id === c.platId),
-      creneau: db.creneaux.find(cr => cr.id === c.creneauId),
-    }));
+    sql += ' ORDER BY c.dateHeure DESC';
     
-    res.json(enriched);
+    const commandes = await query(sql, params);
+    res.json(commandes);
   } catch (error) {
     console.error('Get commandes error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
@@ -36,18 +41,25 @@ router.post('/', authMiddleware(['ETUDIANT']), async (req, res) => {
       return res.status(400).json({ error: 'Plat et créneau requis', code: 'MISSING_FIELDS' });
     }
     
-    const plat = db.plats.find(p => p.id === platId);
-    if (!plat || !plat.estDisponible) {
+    const [plats] = await query('SELECT * FROM plats WHERE id = ? AND estDisponible = TRUE', [platId]);
+    const plat = plats[0];
+    
+    if (!plat) {
       return res.status(400).json({ error: 'Plat indisponible', code: 'PLAT_UNAVAILABLE' });
     }
     
-    const etudiant = db.utilisateurs.find(u => u.id === req.user.id);
+    const [users] = await query('SELECT * FROM utilisateurs WHERE id = ?', [req.user.id]);
+    const etudiant = users[0];
+    
     if (!etudiant) {
       return res.status(404).json({ error: 'Utilisateur introuvable', code: 'USER_NOT_FOUND' });
     }
     
-    const allergenesCommuns = plat.allergenes?.filter(a => etudiant.allergenes?.includes(a));
-    if (allergenesCommuns?.length > 0) {
+    const allergenesPlat = plat.allergenes ? JSON.parse(plat.allergenes) : [];
+    const allergenesUser = etudiant.allergenes ? JSON.parse(etudiant.allergenes) : [];
+    const allergenesCommuns = allergenesPlat.filter(a => allergenesUser.includes(a));
+    
+    if (allergenesCommuns.length > 0) {
       return res.status(400).json({
         error: `Alerte allergène: ${allergenesCommuns.join(', ')}`,
         allergenes: allergenesCommuns,
@@ -55,102 +67,98 @@ router.post('/', authMiddleware(['ETUDIANT']), async (req, res) => {
       });
     }
     
-    const creneau = db.creneaux.find(c => c.id === creneauId);
+    const [creneaux] = await query('SELECT * FROM creneaux WHERE id = ?', [creneauId]);
+    const creneau = creneaux[0];
+    
     if (!creneau) {
       return res.status(400).json({ error: 'Créneau invalide', code: 'CRENEAU_INVALID' });
     }
     
-    const pointsGagnes = config.points.commande + (creneau?.bonusPoints || 0);
+    const pointsGagnes = config.points.commande + (creneau.bonusPoints || 0);
     const commandeId = uuidv4();
+    
     const qrData = JSON.stringify({ commandeId, etudiantId: req.user.id, platId, timestamp: Date.now() });
-    const qrCode = await QRCode.toDataURL(qrData);
+    const qrCodeData = await QRCode.toDataURL(qrData);
     
-    const commande = {
-      id: commandeId,
-      etudiantId: req.user.id,
-      platId,
-      creneauId,
-      dateHeure: new Date(),
-      statut: 'EN_ATTENTE',
-      montantFCFA: plat.prixFCFA,
-      pointsGagnes,
-      qrCode,
-      qrExpireA: new Date(Date.now() + config.qrCode.expirationMinutes * 60000),
-      typeCommande: 'EN_LIGNE',
-    };
+    await query(
+      `INSERT INTO commandes (id, etudiantId, platId, creneauId, dateHeure, statut, montantFCFA, pointsGagnes, methodePaiement, qrCode, qrExpireA, typeCommande)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [commandeId, req.user.id, platId, creneauId, new Date(), 'CONFIRME', plat.prixFCFA, pointsGagnes, methodePaiement || 'WAVE', qrCodeData, new Date(Date.now() + config.qrCode.expirationMinutes * 60000), 'EN_LIGNE']
+    );
     
-    db.commandes.push(commande);
+    const paiementId = uuidv4();
+    await query(
+      `INSERT INTO paiements (id, commandeId, montantFCFA, methode, statut, referenceExterne, dateHeure)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [paiementId, commandeId, plat.prixFCFA, methodePaiement || 'WAVE', 'CONFIRME', `PAY-${Date.now()}`, new Date()]
+    );
     
-    const paiement = {
-      id: uuidv4(),
-      commandeId,
-      montantFCFA: plat.prixFCFA,
-      methode: methodePaiement || 'WAVE',
-      statut: 'CONFIRME',
-      referenceExterne: `PAY-${Date.now()}`,
-      dateHeure: new Date(),
-    };
+    const newPoints = (etudiant.pointsESMT || 0) + pointsGagnes;
+    let niveau = 'BRONZE';
+    if (newPoints >= config.seuils.OR) niveau = 'OR';
+    else if (newPoints >= config.seuils.ARGENT) niveau = 'ARGENT';
     
-    db.paiements.push(paiement);
-    commande.statut = 'CONFIRME';
+    await query('UPDATE utilisateurs SET pointsESMT = ?, niveauFidelite = ? WHERE id = ?', [newPoints, niveau, req.user.id]);
     
-    etudiant.pointsESMT = (etudiant.pointsESMT || 0) + pointsGagnes;
-    updateNiveauFidelite(etudiant);
+    const notifId = uuidv4();
+    await query(
+      `INSERT INTO notifications (id, type, message, destinataire, lue, dateEnvoi)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [notifId, 'COMMANDE_CONFIRMEE', `Commande confirmée ! +${pointsGagnes} points ESMT`, req.user.id, false, new Date()]
+    );
     
-    db.notifications.push({
-      id: uuidv4(),
-      type: 'COMMANDE_CONFIRMEE',
-      message: `Commande confirmée ! +${pointsGagnes} points ESMT`,
-      destinataire: req.user.id,
-      lue: false,
-      dateEnvoi: new Date(),
-    });
-    
-    res.status(201).json({ commande, paiement, qrCode });
+    const [commandes] = await query('SELECT * FROM commandes WHERE id = ?', [commandeId]);
+    res.status(201).json({ commande: commandes[0], qrCode: qrCodeData });
   } catch (error) {
     console.error('Create commande error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
   }
 });
 
-router.put('/:id/valider', authMiddleware(['CUISINIER', 'ADMINISTRATEUR', 'SUPER_ADMIN']), (req, res) => {
+router.put('/:id/valider', authMiddleware(['CUISINIER', 'ADMINISTRATEUR', 'SUPER_ADMIN']), async (req, res) => {
   try {
     const { id } = req.params;
-    const commande = db.commandes.find(c => c.id === id);
     
-    if (!commande) {
+    const [commandes] = await query('SELECT * FROM commandes WHERE id = ?', [id]);
+    if (!commandes[0]) {
       return res.status(404).json({ error: 'Commande introuvable', code: 'COMMANDE_NOT_FOUND' });
     }
     
-    commande.statut = 'VALIDEE';
-    res.json(commande);
+    await query("UPDATE commandes SET statut = 'PRETE', dateHeure = WHERE id = ?", [new Date(), id]);
+    
+    const notifId = uuidv4();
+    await query(
+      `INSERT INTO notifications (id, type, message, destinataire, lue, dateEnvoi)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [notifId, 'COMMANDE_PRETE', 'Votre commande est prête !', commandes[0].etudiantId, false, new Date()]
+    );
+    
+    const [updated] = await query('SELECT * FROM commandes WHERE id = ?', [id]);
+    res.json(updated[0]);
   } catch (error) {
     console.error('Valider commande error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
   }
 });
 
-router.get('/bons-preparation', authMiddleware(['CUISINIER', 'SUPER_ADMIN']), (req, res) => {
+router.get('/bons-preparation', authMiddleware(['CUISINIER', 'SUPER_ADMIN']), async (req, res) => {
   try {
-    const bons = db.commandes
-      .filter(c => c.statut === 'CONFIRME' || c.statut === 'EN_PREPARATION')
-      .map(c => ({ ...c, plat: db.plats.find(p => p.id === c.platId) }));
+    const sql = `
+      SELECT c.*, p.nom as platNom, p.description as platDescription, p.emoji as platEmoji,
+             u.nom as clientNom, u.prenom as clientPrenom
+      FROM commandes c
+      LEFT JOIN plats p ON c.platId = p.id
+      LEFT JOIN utilisateurs u ON c.etudiantId = u.id
+      WHERE c.statut IN ('CONFIRME', 'EN_PREPARATION')
+      ORDER BY c.dateHeure ASC
+    `;
     
+    const bons = await query(sql);
     res.json(bons);
   } catch (error) {
     console.error('Get bons error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
   }
 });
-
-function updateNiveauFidelite(etudiant) {
-  if (etudiant.pointsESMT >= config.seuils.OR) {
-    etudiant.niveauFidelite = 'OR';
-  } else if (etudiant.pointsESMT >= config.seuils.ARGENT) {
-    etudiant.niveauFidelite = 'ARGENT';
-  } else {
-    etudiant.niveauFidelite = 'BRONZE';
-  }
-}
 
 export default router;

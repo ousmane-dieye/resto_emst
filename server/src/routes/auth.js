@@ -2,23 +2,10 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '../config/database.js';
-import { config } from '../config/index.js';
+import { query } from '../config/database.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
-
-export const registerSchema = {
-  nom: { required: true, type: 'string', minLength: 2 },
-  prenom: { required: true, type: 'string', minLength: 2 },
-  email: { required: true, type: 'string', pattern: /@esmt\.(sn|etu\.esmt\.sn)$/, message: 'Email ESMT requis' },
-  motDePasse: { required: true, type: 'string', minLength: 6 },
-};
-
-export const loginSchema = {
-  email: { required: true, type: 'string' },
-  motDePasse: { required: true, type: 'string' },
-};
 
 router.post('/register', async (req, res) => {
   try {
@@ -28,34 +15,24 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email institutionnel ESMT requis', code: 'INVALID_EMAIL' });
     }
     
-    if (db.utilisateurs.find(u => u.email === email)) {
+    const [existing] = await query("SELECT * FROM utilisateurs WHERE email = ?", [email]);
+    if (existing) {
       return res.status(400).json({ error: 'Email déjà utilisé', code: 'EMAIL_EXISTS' });
     }
     
+    const id = uuidv4();
     const hash = await bcrypt.hash(motDePasse, 10);
-    const etudiant = {
-      id: uuidv4(),
-      nom,
-      prenom,
-      email,
-      motDePasse: hash,
-      role: 'ETUDIANT',
-      actif: true,
-      emailVerifie: true,
-      dateCreation: new Date(),
-      numeroEtudiant,
-      classe,
-      filiere,
-      allergenes: allergenes || [],
-      autresRestrictions: autresRestrictions || '',
-      pointsESMT: 100,
-      niveauFidelite: 'BRONZE',
-    };
     
-    db.utilisateurs.push(etudiant);
-    const { motDePasse: _, ...safe } = etudiant;
+    await query(
+      `INSERT INTO utilisateurs (id, nom, prenom, email, motDePasse, role, actif, emailVerifie, dateCreation, numeroEtudiant, classe, filiere, allergenes, autresRestrictions, pointsESMT, niveauFidelite) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, nom, prenom, email, hash, 'ETUDIANT', true, true, new Date(), numeroEtudiant, classe, filiere, JSON.stringify(allergenes || []), autresRestrictions || '', 100, 'BRONZE']
+    );
     
-    res.status(201).json({ message: 'Compte créé avec succès', utilisateur: safe });
+    const [user] = await query("SELECT * FROM utilisateurs WHERE id = ?", [id]);
+    delete user.motDePasse;
+    
+    res.status(201).json({ message: 'Compte créé avec succès', utilisateur: user });
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
@@ -66,7 +43,9 @@ router.post('/login', async (req, res) => {
   try {
     const { email, motDePasse } = req.body;
     
-    const user = db.utilisateurs.find(u => u.email === email);
+    const [users] = await query("SELECT * FROM utilisateurs WHERE email = ?", [email]);
+    const user = users[0];
+    
     if (!user || !await bcrypt.compare(motDePasse, user.motDePasse)) {
       return res.status(401).json({ error: 'Identifiants incorrects', code: 'INVALID_CREDENTIALS' });
     }
@@ -81,21 +60,33 @@ router.post('/login', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
     
-    const { motDePasse: _, ...safe } = user;
-    res.json({ token, utilisateur: safe });
+    delete user.motDePasse;
+    res.json({ token, utilisateur: user });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
   }
 });
 
-router.get('/me', authMiddleware(), (req, res) => {
-  const user = db.utilisateurs.find(u => u.id === req.user.id);
-  if (!user) {
-    return res.status(404).json({ error: 'Utilisateur introuvable', code: 'USER_NOT_FOUND' });
+router.get('/me', authMiddleware(), async (req, res) => {
+  try {
+    const [users] = await query("SELECT * FROM utilisateurs WHERE id = ?", [req.user.id]);
+    const user = users[0];
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur introuvable', code: 'USER_NOT_FOUND' });
+    }
+    
+    delete user.motDePasse;
+    res.json(user);
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({ error: 'Erreur serveur', code: 'SERVER_ERROR' });
   }
-  const { motDePasse: _, ...safe } = user;
-  res.json(safe);
+});
+
+router.post('/logout', authMiddleware(), (req, res) => {
+  res.json({ message: 'Déconnexion réussie' });
 });
 
 export default router;
